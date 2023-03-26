@@ -5,3 +5,5 @@ numpy
 sklearn
 gunicorn
 scikit-learn
+mplcursors
+pathlib
