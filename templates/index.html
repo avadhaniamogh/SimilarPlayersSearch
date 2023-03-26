@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css"
+    	href="{{ url_for('static', filename='stylesheet.css') }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css" />
+</head>
+
+<title>
+    Similar Players Search
+</title>
+
+<body>
+
+    <div id="heading" class="container">
+        <h1 class="text-primary" align="center">Similar Players Search</h1>
+
+        <div class="row row-m-t">
+            <div class="col-md-4">
+                <div class="row row-m-t">
+                    <div class="col-md-8">
+                        <label>Please choose a team</label>
+                        <select name="squad_select" id="squad_select" class="form-control" title="Select Squad">
+                            {% for squad in squads %}
+                                <option value="{{squad}}">{{squad}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row row-m-t">
+                    <div class="col-md-8">
+                        <label>Please select a player</label>
+                        <select name="player_select" data-live-search="true" id="player_select" class="form-control" title="Select Player"> </select>
+                    </div>
+                </div>
+                <div class="row row-m-t">
+                    <div class="col-md-8">
+                        <button type="button" id="search_btn" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="row row-m-t">
+                <h2 id="similar_players_header">Please select player to search</h2>
+                <table id="similar_players_table" class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Squad</th>
+                            <th>Age</th>
+                            <th>Position</th>
+                        <tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
+    <script>
+            $(document).ready(function () {
+                $("#squad_select").selectpicker();
+                $("#player_select").selectpicker();
+
+                function load_players(type, squad_name) {
+                    $.ajax({
+                        url: "/squad",
+                        method: "POST",
+                        data: { type: type, squad_name: squad_name },
+                        dataType: "json",
+                        success: function (data) {
+                            var html = "";
+                            for (var count = 0; count < data.length; count++) {
+                                html += '<option value="' + data[count].Rk + '"' + 'data-subtext="' + data[count].Pos + '">' + data[count].Player + "</option>";
+                            }
+                            if (type == "squadData") {
+                                $("#squad_select").html(html);
+                                $("#squad_select").selectpicker("refresh");
+                            } else {
+                                $("#player_select").html(html);
+                                $("#player_select").selectpicker("refresh");
+                            }
+                        },
+                    });
+                }
+
+                function get_similar_players(player_rk, num_of_players) {
+                    $.ajax({
+                        url: "/search",
+                        method: "POST",
+                        data: { rk: player_rk, count: num_of_players },
+                        dataType: "json",
+                        success: function (data) {
+                            $("#similar_players_table").find("tr:gt(0)").remove();
+                            var trHTML = '';
+                            $.each(data, function (i, item) {
+                                trHTML += '<tr><td>' + item.Player + '</td><td>' + item.Squad + '</td><td>' + item.Age + '</td><td>' + item.Pos + '</td></tr>';
+                            });
+                            $('#similar_players_table').append(trHTML);
+                        },
+                    });
+                }
+
+                $(document).on("change", "#squad_select", function () {
+                    var squad_name = $("#squad_select").val();
+                    load_players("playerData", squad_name);
+                });
+
+                $(document).on("click", "#search_btn", function () {
+                    var player_rk = $("#player_select").val();
+                    if (player_rk) {
+                            var player_name = $("#player_select option:selected").text();
+                            var heading_text = "Top 10 players similar to " + player_name + ":";
+                            document.getElementById("similar_players_header").textContent = heading_text;
+                        get_similar_players(player_rk, 10);
+                    }
+                });
+            });
+    </script>
+</script>
+</body>
+</html>
