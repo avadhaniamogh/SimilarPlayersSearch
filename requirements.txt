@@ -2,7 +2,6 @@ Flask
 jsonschema
 pandas
 numpy
-sklearn
 gunicorn
 scikit-learn
 mplcursors
